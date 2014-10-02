@@ -6,13 +6,8 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus.HttpPackets.HttpDirectories
 {
-	public class DefaultErrorPage : IPage
+	public class DefaultErrorPage : IErrorPage
 	{
-		public HttpStatus Status;
-		public DefaultErrorPage(HttpStatus status)
-		{
-			this.Status =status;
-		}
 		public override HttpSendPacket PageRead(HttpPath Args)
 		{
 

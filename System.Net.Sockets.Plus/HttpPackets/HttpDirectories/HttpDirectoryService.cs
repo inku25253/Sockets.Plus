@@ -11,12 +11,16 @@ namespace System.Net.Sockets.Plus.HttpPackets.HttpDirectories
 
 		public IHttpDirectory Directory = new HttpDirectory();
 		public Dictionary<HttpStatus, IPage> ErrorPage = new Dictionary<HttpStatus, IPage>();
-
+		public IErrorPage DefaultErrorPage = new DefaultErrorPage();
 		public IPage GetErrorPage(HttpStatus status)
 		{
 			if (this.ErrorPage.ContainsKey(status))
-				return this.ErrorPage[HttpStatus.NotFound];
-			else return new DefaultErrorPage(status);
+				return this.ErrorPage[status];
+			else
+			{
+				DefaultErrorPage.Status = status;
+				return DefaultErrorPage;
+			}
 		}
 		public IPage GetPage(HttpPath path)
 		{
