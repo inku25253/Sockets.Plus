@@ -7,15 +7,20 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus
 {
-	public class SocketStream<T, TP> : Stream
+
+	public class SocketStream<T, TP> : SocketStream<T, TP, TP>
+	{
+		public SocketStream(SocketClient<T, TP, TP> client) : base(client) { }
+	}
+	public class SocketStream<T, TSendPacket, TReceivePacket> : Stream
 	{
 
 
 
 		public MemoryStream UsingBuffer = new MemoryStream();
 		public bool IsStreamMode;
-		public SocketClient<T, TP> Client { get; set; }
-		public SocketStream(SocketClient<T, TP> client)
+		public SocketClient<T, TSendPacket, TReceivePacket> Client { get; set; }
+		public SocketStream(SocketClient<T, TSendPacket, TReceivePacket> client)
 		{
 			this.Client = client;
 		}
@@ -41,7 +46,7 @@ namespace System.Net.Sockets.Plus
 
 		public override bool CanWrite
 		{
-			get { return true; }
+			get { return false; }
 		}
 
 		public override void Flush()

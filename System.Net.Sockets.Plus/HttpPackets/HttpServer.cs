@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets.Plus.HttpPackets.HttpDirectories;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,45 +10,52 @@ namespace System.Net.Sockets.Plus.HttpPackets
 	public class HttpServer : HttpClient
 	{
 
-		SocketServer<HttpClient, HttpPacket> Server;
+		SocketServer<HttpClient, HttpSendPacket, HttpReceivePacket> Server;
+
+
+		public HttpDirectoryService DirectoryService { get; private set; }
 
 		public HttpServer()
 		{
-			Server = new SocketServer<HttpClient, HttpPacket>();
+			Server = new SocketServer<HttpClient, HttpSendPacket, HttpReceivePacket>();
 			Server.DefaultDecoder = new HttpDecoder();
 			Server.DefaultEncoder = new HttpEncoder();
+			Server.Activator = new SimpleActivator<HttpClient, HttpSendPacket, HttpReceivePacket>(typeof(SocketClientRequest));
+			this.DirectoryService = new HttpDirectoryService();
 
-			Server.OnConnectRequest +=Server_OnConnectRequest;
+
+
+
+
+
+
 			Server.OnDataReceived +=Server_OnDataReceived;
-			Server.OnDisconnect +=Server_OnDisconnect;
+
+
+
+
+
 		}
 
-
-
-
-		HttpClient Server_OnConnectRequest(object sender, SocketEventArgs<HttpClient, HttpPacket> args)
+		void Server_OnDataReceived(object sender, SocketReceiveEventArgs<HttpClient, HttpSendPacket, HttpReceivePacket> args)
 		{
+			IPage page = this.DirectoryService.GetPage(args.Packet.Path);
 
-
-			return new HttpClient();
+			HttpSendPacket packet;
+			if (page == null)
+				packet = this.DirectoryService.GetErrorPage(HttpStatus.NotFound).PageRead(null);
+			else packet = page.PageRead(args.Packet.Path);
+			args.Send(packet);
+			args.Client.Close();
 		}
-		void Server_OnDataReceived(object sender, SocketEventArgs<HttpClient, HttpPacket> args)
-		{
-			Console.WriteLine(args.Packet.Method);
-			Console.WriteLine(args.Packet.Path);
-			Console.WriteLine(args.Packet.Version);
-		}
-		void Server_OnDisconnect(object sender, SocketEventArgs<HttpClient, HttpPacket> args)
-		{
-
-		}
-
 
 		public void Start(EndPoint endp)
 		{
 			Server.Throwable_Setup(endp);
 			Server.Start();
 		}
+
+
 
 
 

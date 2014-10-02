@@ -6,13 +6,14 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus.Serializer
 {
-	public class ClassDecoder<T, TClass> : IPacketDecoder<T, TClass>
+	public class ClassDecoder<T, TClass> : IPacketDecoder<T, TClass, TClass>
 	{
-		#region IPacketDecoder<T,TClass> メンバー
 
-		public TClass Decode(object sender, SocketClient<T, TClass> client, SocketStream<T, TClass> net)
+		#region IPacketDecoder<T,TClass,TClass> メンバー
+
+		public TClass Decode(object sender, SocketClient<T, TClass, TClass> client, SocketStream<T, TClass, TClass> stream)
 		{
-			return default(TClass);
+			throw new NotImplementedException();
 		}
 
 		#endregion

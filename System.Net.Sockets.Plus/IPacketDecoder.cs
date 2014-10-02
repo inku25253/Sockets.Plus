@@ -7,8 +7,13 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus
 {
-	public interface IPacketDecoder<T, TP>
+
+	public interface IPacketDecoder<T, TSendPacket, TReceivePacket>
 	{
-		TP Decode(object sender, SocketClient<T, TP> client, SocketStream<T, TP> stream);
+		TReceivePacket Decode(
+			object sender,
+			SocketClient<T, TSendPacket, TReceivePacket> client,
+			SocketStream<T, TSendPacket, TReceivePacket> stream
+		);
 	}
 }

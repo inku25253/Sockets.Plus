@@ -7,29 +7,61 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus
 {
-	public class SocketEventArgs<T, TP> : EventArgs
+
+	public class SocketSendEventArgs<T, TSendPacket, TReceivePacket> : SocketEventArgs<T, TSendPacket, TReceivePacket>
 	{
-		public SocketClient<T, TP> Client { get; protected set; }
-		public TP Packet { get; internal set; }
+		public TSendPacket Packet { get; internal set; }
 
-		public byte[] ReceiveBuffer { get; private set; }
 
-		public SocketEventArgs(SocketClient<T, TP> client, byte[] buff = null)
+		public SocketSendEventArgs(SocketClient<T, TSendPacket, TReceivePacket> client)
+			: base(client)
+		{
+
+		}
+	}
+
+
+
+	public class SocketEventArgs<T, TP> : SocketEventArgs<T, TP, TP>
+	{
+		public SocketEventArgs(SocketClient<T, TP, TP> client)
+			: base(client)
+		{
+		}
+		public SocketEventArgs(SocketEventArgs<T, TP, TP> args)
+			: base(args)
+		{
+		}
+
+	}
+	public class SocketEventArgs<T, TSendPacket, TReceivePacket> : EventArgs
+	{
+		public SocketClient<T, TSendPacket, TReceivePacket> Client { get; protected set; }
+
+
+		public SocketEventArgs(SocketClient<T, TSendPacket, TReceivePacket> client)
 		{
 			this.Client = client;
-			this.ReceiveBuffer = buff;
 		}
-		public SocketEventArgs(SocketEventArgs<T, TP> args)
+		public SocketEventArgs(SocketEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			this.Client = args.Client;
-			this.Packet = args.Packet;
 		}
 
-		public void Send(TP tp)
+		public void Send(TSendPacket tp)
 		{
 			Client.Send(tp);
 		}
 
 
 	}
+
+
+
+
+
+
+
+
+
 }

@@ -47,6 +47,12 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Net.Sockets.Plus\System.Net.Sockets.Plus.csproj">
+      <Project>{5a5ed60a-648c-450b-ad20-06b0d915ef61}</Project>
+      <Name>System.Net.Sockets.Plus</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

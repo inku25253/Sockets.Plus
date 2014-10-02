@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus
 {
-	public interface IPacketEncoder<T, TP>
+
+	public interface IPacketEncoder<T, TSendPacket, TReceivePacket>
 	{
-		byte[] Encode(TP obj, SocketClient<T, TP> client);
+		byte[] Encode(TSendPacket packet, SocketClient<T, TSendPacket, TReceivePacket> client);
 
 	}
 }

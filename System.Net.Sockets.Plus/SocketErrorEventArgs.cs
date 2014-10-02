@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus
 {
-	public class SocketErrorEventArgs<T, TP> : SocketEventArgs<T, TP>
+
+	public class SocketErrorEventArgs<T, TSendPacket, TReceivePacket> : SocketEventArgs<T, TSendPacket, TReceivePacket>
 	{
 
 		public Exception Exception { get; set; }
 		public SocketErrorType Type { get; private set; }
-		public SocketErrorEventArgs(Exception ex, SocketEventArgs<T, TP> socket, SocketErrorType type)
+		public SocketErrorEventArgs(Exception ex, SocketEventArgs<T, TSendPacket, TReceivePacket> socket, SocketErrorType type)
 			: base(socket)
 		{
 			this.Exception = ex;

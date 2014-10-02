@@ -6,13 +6,15 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus.Serializer
 {
-	public class ClassEncoder<T, TClass> : IPacketEncoder<T, TClass>
+	public class ClassEncoder<T, TClass> : IPacketEncoder<T, TClass, TClass>
 	{
-		#region IPacketEncoder<T,TClass> メンバー
 
-		public byte[] Encode(TClass obj, SocketClient<T, TClass> client)
+
+		#region IPacketEncoder<T,TClass,TClass> メンバー
+
+		public byte[] Encode(TClass packet, SocketClient<T, TClass, TClass> client)
 		{
-			return new byte[0];
+			throw new NotImplementedException();
 		}
 
 		#endregion

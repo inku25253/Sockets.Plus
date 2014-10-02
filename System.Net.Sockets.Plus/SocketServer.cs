@@ -17,15 +17,57 @@ namespace System.Net.Sockets.Plus
 
 		}
 	}
-	public class SocketServer<T> : SocketServer<T, BytePacket>
+	public class SocketServer<TState> : SocketServer<TState, BytePacket>
 	{
 		public SocketServer()
+			: base()
 		{
-			this.DefaultDecoder = new ByteDecoder<T>();
-			this.DefaultEncoder = new ByteEncoder<T>();
+			this.DefaultDecoder = new ByteDecoder<TState>();
+			this.DefaultEncoder = new ByteEncoder<TState>();
 		}
 	}
-	public class SocketServer<T, TPacket>
+
+	public class SocketServer<TState, TPacket> : SocketServer<TState, TPacket, TPacket>
+	{
+
+
+		public new IPacketDecoder<TState, TPacket, TPacket> DefaultDecoder
+		{
+			get
+			{
+				return base.DefaultDecoder;
+			}
+			set
+			{
+				base.DefaultDecoder = value;
+			}
+		}
+		public new IPacketEncoder<TState, TPacket, TPacket> DefaultEncoder
+		{
+			get
+			{
+				return base.DefaultEncoder;
+			}
+			set
+			{
+				base.DefaultEncoder = value;
+			}
+		}
+
+
+		public new IActivator<TState, TPacket> Activator
+		{
+			get
+			{
+				return base.Activator as IActivator<TState, TPacket>;
+			}
+			set
+			{
+				base.Activator = value;
+			}
+		}
+	}
+	public class SocketServer<TState, TSendPacket, TReceivePacket>
 	{
 
 		#region Fields
@@ -36,33 +78,48 @@ namespace System.Net.Sockets.Plus
 		#region Properties
 		public Socket Server { get; set; }
 
-		public List<SocketClient<T, TPacket>> Clients { get; private set; }
+		public List<SocketClient<TState, TSendPacket, TReceivePacket>> Clients { get; private set; }
 
 		//public int BufferSize { get { return bufferSize; } set { bufferSize = value; } }
 
-		public IPacketDecoder<T, TPacket> DefaultDecoder { get; set; }
-		public IPacketEncoder<T, TPacket> DefaultEncoder { get; set; }
+		public IPacketDecoder<TState, TSendPacket, TReceivePacket> DefaultDecoder { get; set; }
+		public IPacketEncoder<TState, TSendPacket, TReceivePacket> DefaultEncoder { get; set; }
+
+
+		public IActivator<TState, TSendPacket, TReceivePacket> Activator { get; set; }
+
+
+
+
 		#endregion
 
 		#region Delegate
-		public delegate void SocketEvent(object sender, SocketEventArgs<T, TPacket> args);
-		public delegate void SocketErrorEvent(object sender, SocketErrorEventArgs<T, TPacket> args);
-		public delegate T SocketConnectEvent(object sender, SocketEventArgs<T, TPacket> args);
+		public delegate void SocketEvent(object sender, SocketEventArgs<TState, TSendPacket, TReceivePacket> args);
+		public delegate void SocketReceiveEventArgs(object sender, SocketReceiveEventArgs<TState, TSendPacket, TReceivePacket> args);
+		public delegate void SocketErrorEvent(object sender, SocketErrorEventArgs<TState, TSendPacket, TReceivePacket> args);
+		public delegate void SocketConnectEvent(object sender, SocketEventArgs<TState, TSendPacket, TReceivePacket> args);
 		#endregion
 
 		#region Event
 		public event SocketEvent OnDisconnect;
 		public event SocketErrorEvent OnSocketException;
 		public event SocketConnectEvent OnConnectRequest;
-		public event SocketEvent OnDataReceived;
+		public event SocketReceiveEventArgs OnDataReceived;
 		#endregion
 
 		#region Constructor
 		public SocketServer()
 		{
 			Server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			Clients = new List<SocketClient<T, TPacket>>();
+			Clients = new List<SocketClient<TState, TSendPacket, TReceivePacket>>();
+			Activator = new SimpleActivator<TState, TSendPacket, TReceivePacket>();
+		}
 
+		public SocketServer(IPacketDecoder<TState, TSendPacket, TReceivePacket> decoder, IPacketEncoder<TState, TSendPacket, TReceivePacket> encoder)
+			: this()
+		{
+			this.DefaultDecoder = decoder;
+			this.DefaultEncoder = encoder;
 		}
 		#endregion
 
@@ -123,21 +180,22 @@ namespace System.Net.Sockets.Plus
 		}
 		public void Stop()
 		{
-			//Server.Shutdown(SocketShutdown.Both);
-			SocketClient<T, TPacket> currentClient;
-			for (int i = 0; i < Clients.Count; ++i)
+			SocketClient<TState, TSendPacket, TReceivePacket> currentClient;
+			if (Clients.Count > 1)
 			{
-				currentClient = Clients[i];
-				currentClient.Close();
-
+				for (int i = 0; i < Clients.Count; ++i)
+				{
+					currentClient = Clients[i];
+					currentClient.Close();
+				}
 			}
+			Server.Dispose();
 
-			//			Server = null;
 		}
 
 
 
-		public void Send(SocketClient<T, TPacket> client, TPacket data)
+		public void Send(SocketClient<TState, TSendPacket, TReceivePacket> client, TSendPacket data)
 		{
 			if (!ConnectCheck(client)) return;
 			byte[] byteData = client.Encoder.Encode(data, client);
@@ -145,7 +203,7 @@ namespace System.Net.Sockets.Plus
 
 		}
 
-		public void Send(SocketClient<T, TPacket> client, byte[] data)
+		public void Send(SocketClient<TState, TSendPacket, TReceivePacket> client, byte[] data)
 		{
 			try
 			{
@@ -160,7 +218,7 @@ namespace System.Net.Sockets.Plus
 			}
 			catch (SocketException ex)
 			{
-				this.SocketErrorCall(ex, new SocketEventArgs<T, TPacket>(client), SocketErrorType.Send);
+				this.SocketErrorCall(ex, new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client), SocketErrorType.Send);
 			}
 		}
 
@@ -169,9 +227,10 @@ namespace System.Net.Sockets.Plus
 		#endregion
 
 		#region PrivateMethods
-		private void SocketErrorCall(Exception ex, SocketEventArgs<T, TPacket> socket, SocketErrorType type)
+		private void SocketErrorCall(Exception ex, SocketEventArgs<TState, TSendPacket, TReceivePacket> socket, SocketErrorType type)
 		{
-			SocketErrorEventArgs<T, TPacket> eArgs = new SocketErrorEventArgs<T, TPacket>(ex, socket, type);
+			SocketErrorEventArgs
+			<TState, TSendPacket, TReceivePacket> eArgs = new SocketErrorEventArgs<TState, TSendPacket, TReceivePacket>(ex, socket, type);
 			if (OnSocketException != null)
 			{
 				OnSocketException(this, eArgs);
@@ -183,7 +242,7 @@ namespace System.Net.Sockets.Plus
 				Clients.Remove(socket.Client);
 		}
 
-		private bool ConnectCheck(SocketClient<T, TPacket> client)
+		private bool ConnectCheck(SocketClient<TState, TSendPacket, TReceivePacket> client)
 		{
 
 
@@ -197,9 +256,9 @@ namespace System.Net.Sockets.Plus
 			return true;
 
 		}
-		private void CallDisconnect(SocketClient<T, TPacket> client)
+		private void CallDisconnect(SocketClient<TState, TSendPacket, TReceivePacket> client)
 		{
-			SocketEventArgs<T, TPacket> args = new SocketEventArgs<T, TPacket>(client);
+			SocketEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client);
 
 			if (OnDisconnect != null)
 			{
@@ -208,7 +267,7 @@ namespace System.Net.Sockets.Plus
 			client.CallDisconnect(this, args);
 			client.Close();
 		}
-		private SocketClient<T, TPacket> SerchClient(int id)
+		private SocketClient<TState, TSendPacket, TReceivePacket> SerchClient(int id)
 		{
 			return Clients.Where((e) => e.ID == id).First();
 		}
@@ -220,33 +279,39 @@ namespace System.Net.Sockets.Plus
 			lock (NetworkLock)
 			{
 
-				Socket socket = Server.EndAccept(ar);
-				SocketClient<T, TPacket> client = new SocketClient<T, TPacket>(this, socket, DefaultDecoder, DefaultEncoder);
-				SocketEventArgs<T, TPacket> args = new SocketEventArgs<T, TPacket>(client);
-
 				try
 				{
-					T t = default(T);
-					if (OnConnectRequest != null)
+					Socket socket = Server.EndAccept(ar);
+					var client = new SocketClient<TState, TSendPacket, TReceivePacket>(this, socket, DefaultDecoder, DefaultEncoder);
+					SocketEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client);
+
+					try
 					{
-						t = OnConnectRequest(this, args);
+
+						client.State = Activator.Activate(args);
+
+
+						if (OnConnectRequest != null)
+						{
+							OnConnectRequest(this, args);
+						}
+
+						client.CallConnected(this, args);
+
+						client.ID = Clients.Count;
+
+						Clients.Add(client);
+
+						byte[] buffer = new byte[0];
+						client.Client.BeginReceive(buffer, 0, 0, SocketFlags.None, OnReceived, client.ID);
 					}
-
-					client.State = t;
-					client.CallConnected(this, args);
-
-					client.ID = Clients.Count;
-
-					Clients.Add(client);
-
-					byte[] buffer = new byte[0];
-					client.Client.BeginReceive(buffer, 0, 0, SocketFlags.None, OnReceived, client.ID);
+					catch (SocketException ex)
+					{
+						this.SocketErrorCall(ex, args, SocketErrorType.Connect);
+					}
+					Server.BeginAccept(OnAccept, null);
 				}
-				catch (SocketException ex)
-				{
-					this.SocketErrorCall(ex, args, SocketErrorType.Connect);
-				}
-				Server.BeginAccept(OnAccept, null);
+				catch (ObjectDisposedException) { }
 			}
 		}
 
@@ -255,19 +320,17 @@ namespace System.Net.Sockets.Plus
 
 			int clientId = (int)ar.AsyncState;
 
-			SocketClient<T, TPacket> client;
+			SocketClient<TState, TSendPacket, TReceivePacket> client;
 			try
 			{
 				client = SerchClient(clientId);
 			}
 			catch (InvalidOperationException) { return; }
 
-			SocketEventArgs<T, TPacket> args = new SocketEventArgs<T, TPacket>(client);
+			SocketReceiveEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketReceiveEventArgs<TState, TSendPacket, TReceivePacket>(client);
 			try
 			{
-				//if (!ConnectCheck(client)) return;
 				int len = client.Client.EndReceive(ar);
-				//Console.WriteLine(len);
 				if (client.Client.Available < 1)
 				{
 					CallDisconnect(client);
@@ -276,24 +339,25 @@ namespace System.Net.Sockets.Plus
 				}
 				lock (NetworkLock)
 				{
-					/*byte[] buff = client.Buffer;
-					client.Buffer = new byte[len];
-					Buffer.BlockCopy(buff, 0, client.Buffer, 0, len);
-					if (client.Crypter!= null)
-					{
-						client.Buffer= client.Crypter.Decrypt(client.Buffer);
-					}
-					*/
 
 					while (client.Client.Available > 0)
 					{
-						args.Packet =(TPacket)client.Decoder.Decode(this, client, client.NetworkStream);
+						args.Packet =(TReceivePacket)client.Decoder.Decode(this, client, client.NetworkStream);
+
+						if (client.Connected == false)
+						{
+							//切断処理
+							client.Close();
+							return;
+						}
 						client.UsingBuffer = client.NetworkStream.UsingBuffer.ToArray();
 
 						if (OnDataReceived != null)
 						{
 							OnDataReceived(this, args);
 						}
+
+
 						client.CallDataReceived(this, args);
 						client.NetworkStream.Flush();
 					}
@@ -308,6 +372,10 @@ namespace System.Net.Sockets.Plus
 
 			}
 			catch (ArgumentException ex)
+			{
+				this.SocketErrorCall(ex, args, SocketErrorType.Receive);
+			}
+			catch (SocketPlusException ex)
 			{
 				this.SocketErrorCall(ex, args, SocketErrorType.Receive);
 			}
@@ -326,7 +394,7 @@ namespace System.Net.Sockets.Plus
 			lock (NetworkLock)
 			{
 				int clientId = (int)ar.AsyncState;
-				SocketClient<T, TPacket> client;
+				SocketClient<TState, TSendPacket, TReceivePacket> client;
 				try
 				{
 					client = SerchClient(clientId);
@@ -337,9 +405,14 @@ namespace System.Net.Sockets.Plus
 				{
 					client.Client.EndSend(ar);
 				}
+				catch (ArgumentException ex)
+				{
+
+					this.SocketErrorCall(ex, new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client), SocketErrorType.Send);
+				}
 				catch (SocketException ex)
 				{
-					this.SocketErrorCall(ex, new SocketEventArgs<T, TPacket>(client), SocketErrorType.Send);
+					this.SocketErrorCall(ex, new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client), SocketErrorType.Send);
 				}
 			}
 		}

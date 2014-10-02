@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace System.Net.Sockets.Plus.HttpPackets
+namespace System.Net.Sockets.Plus.HttpPackets.HttpProtocols
 {
-	class HttpPacketHandler
+	public class HttpProtocolManager
 	{
 	}
 }

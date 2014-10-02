@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace System.Net.Sockets.Plus.BytePackets
 {
-	public class ByteEncoder<T> : IPacketEncoder<T, BytePacket>
+	public class ByteEncoder<T> : IPacketEncoder<T, BytePacket, BytePacket>
 	{
 		#region IPacketEncoder<T,ByteEncoder<T>> メンバー
 
-		public byte[] Encode(BytePacket obj, SocketClient<T, BytePacket> client)
+		public byte[] Encode(BytePacket obj, SocketClient<T, BytePacket, BytePacket> client)
 		{
 			return obj.Buffer;
 		}

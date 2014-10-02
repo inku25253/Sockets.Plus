@@ -27,9 +27,33 @@ namespace System.Net.Sockets.Plus
 
 		}
 	}
+	public class SocketClient<T, TP> : SocketClient<T, TP, TP>
+	{
+		public new IPacketDecoder<T, TP, TP> Decoder
+		{
+			get
+			{
+				return base.Decoder;
+			}
+			set
+			{
+				base.Decoder = value;
+			}
+		}
+		public new IPacketEncoder<T, TP, TP> Encoder
+		{
+			get
+			{
+				return base.Encoder;
+			}
+			set
+			{
+				base.Encoder = value;
+			}
+		}
+	}
 
-
-	public class SocketClient<T, TP>
+	public class SocketClient<T, TSendPacket, TReceivePacket>
 	{
 		#region Fields
 		private ManualResetEvent clientDone = new ManualResetEvent(false);
@@ -42,7 +66,7 @@ namespace System.Net.Sockets.Plus
 		private readonly object NetworkLock = new object();
 
 		public Socket Client;
-		public SocketServer<T, TP> Server { get; private set; }
+		public SocketServer<T, TSendPacket, TReceivePacket> Server { get; private set; }
 		public T State { get; set; }
 
 		public int ID { get; internal set; }
@@ -50,10 +74,10 @@ namespace System.Net.Sockets.Plus
 
 		public bool Connected { get { return Client.Connected; } }
 
-		public SocketStream<T, TP> NetworkStream { get; set; }
+		public SocketStream<T, TSendPacket, TReceivePacket> NetworkStream { get; set; }
 
-		public IPacketDecoder<T, TP> Decoder { get; set; }
-		public IPacketEncoder<T, TP> Encoder { get; set; }
+		public IPacketDecoder<T, TSendPacket, TReceivePacket> Decoder { get; set; }
+		public IPacketEncoder<T, TSendPacket, TReceivePacket> Encoder { get; set; }
 
 		public IPacketCrypter Crypter { get; set; }
 
@@ -61,24 +85,24 @@ namespace System.Net.Sockets.Plus
 		#endregion
 
 		#region Events
-		public event SocketServer<T, TP>.SocketEvent OnDisconnect;
-		public event SocketServer<T, TP>.SocketErrorEvent OnSocketException;
-		public event SocketServer<T, TP>.SocketEvent OnConnected;
-		public event SocketServer<T, TP>.SocketEvent OnDataReceived;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketEvent OnDisconnect;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketErrorEvent OnSocketException;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketEvent OnConnected;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketEvent OnDataReceived;
 		#endregion
 
 		#region Constructors
-		internal SocketClient(SocketServer<T, TP> Server, Socket socket, IPacketDecoder<T, TP> decoder, IPacketEncoder<T, TP> encoder)
+		internal SocketClient(SocketServer<T, TSendPacket, TReceivePacket> Server, Socket socket, IPacketDecoder<T, TSendPacket, TReceivePacket> decoder, IPacketEncoder<T, TSendPacket, TReceivePacket> encoder)
 		{
 			this.Server = Server;
 			this.Client = socket;
-			this.NetworkStream = new SocketStream<T, TP>(this);
+			this.NetworkStream = new SocketStream<T, TSendPacket, TReceivePacket>(this);
 			this.Decoder = decoder;
 			this.Encoder = encoder;
 			IsClosed = false;
 		}
 
-		internal SocketClient(SocketClient<T, TP> args)
+		internal SocketClient(SocketClient<T, TSendPacket, TReceivePacket> args)
 		{
 			//this.Buffer  = args.Buffer;
 			this.Client = args.Client;
@@ -96,28 +120,28 @@ namespace System.Net.Sockets.Plus
 		#endregion
 
 		#region InternalMethods
-		internal void CallConnected(object sender, SocketEventArgs<T, TP> args)
+		internal void CallConnected(object sender, SocketEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			if (OnConnected != null)
 			{
 				OnConnected(sender, args);
 			}
 		}
-		internal void CallDataReceived(object sender, SocketEventArgs<T, TP> args)
+		internal void CallDataReceived(object sender, SocketReceiveEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			if (OnDataReceived != null)
 			{
 				OnDataReceived(sender, args);
 			}
 		}
-		internal void CallSocketException(object sender, SocketErrorEventArgs<T, TP> args)
+		internal void CallSocketException(object sender, SocketErrorEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			if (OnSocketException != null)
 			{
 				OnSocketException(sender, args);
 			}
 		}
-		internal void CallDisconnect(object sender, SocketEventArgs<T, TP> args)
+		internal void CallDisconnect(object sender, SocketEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			if (OnDisconnect != null)
 			{
@@ -151,7 +175,7 @@ namespace System.Net.Sockets.Plus
 
 			Client.BeginConnect(endp, CollbackOnConnected, null);
 		}
-		public void Send(TP data)
+		public void Send(TSendPacket data)
 		{
 			if (Server != null)
 				Server.Send(this, data);
@@ -192,10 +216,11 @@ namespace System.Net.Sockets.Plus
 		{
 			if (Client.Connected)
 			{
-				Client.Shutdown(SocketShutdown.Both);
+				//Client.Disconnect(true);
+				//Client.Shutdown(SocketShutdown.Both);
 
-				Client.Disconnect(true);
 			}
+			Client.Dispose();
 			IsClosed = true;
 		}
 
@@ -238,8 +263,8 @@ namespace System.Net.Sockets.Plus
 		#region CallbackMethods
 		private void CollbackOnConnected(IAsyncResult ar)
 		{
-			SocketEventArgs<T, TP> args = new SocketEventArgs<T, TP>(this);
-			this.NetworkStream = new SocketStream<T, TP>(this);
+			var args = new SocketEventArgs<T, TSendPacket, TReceivePacket>(this);
+			this.NetworkStream = new SocketStream<T, TSendPacket, TReceivePacket>(this);
 			try
 			{
 				Client.EndConnect(ar);
@@ -255,13 +280,17 @@ namespace System.Net.Sockets.Plus
 			{
 				this.SocketErrorCall(ex, args, SocketErrorType.Connect);
 			}
+			catch (ObjectDisposedException)
+			{
+
+			}
 		}
 		private void CallbackOnDisconnect(IAsyncResult ar)
 		{
 			Client.EndDisconnect(ar);
 
 
-			SocketEventArgs<T, TP> args = new SocketEventArgs<T, TP>(this);
+			var args = new SocketEventArgs<T, TSendPacket, TReceivePacket>(this);
 			CallDisconnect(this, args);
 			clientDone.Set();
 		}
@@ -270,7 +299,7 @@ namespace System.Net.Sockets.Plus
 		private void ReceiveTask(IAsyncResult ar)
 		{
 
-			SocketEventArgs<T, TP> args = new SocketEventArgs<T, TP>(this);
+			var args = new SocketReceiveEventArgs<T, TSendPacket, TReceivePacket>(this);
 			try
 			{
 
@@ -295,7 +324,7 @@ namespace System.Net.Sockets.Plus
 
 						while (this.Client.Available > 0)
 						{
-							args.Packet =(TP)Decoder.Decode(this, this, this.NetworkStream);
+							args.Packet =(TReceivePacket)Decoder.Decode(this, this, this.NetworkStream);
 							UsingBuffer = NetworkStream.UsingBuffer.ToArray();
 							if (OnDataReceived != null)
 							{
@@ -313,11 +342,15 @@ namespace System.Net.Sockets.Plus
 
 
 			}
+			catch (InvalidProtocolException)
+			{
+				Close();
+			}
 			catch (SocketException ex)
 			{
 				this.SocketErrorCall(ex, args, SocketErrorType.Receive);
 			}
-			catch (InvalidProtocolException)
+			catch (ObjectDisposedException)
 			{
 				Close();
 			}
@@ -333,7 +366,11 @@ namespace System.Net.Sockets.Plus
 			}
 			catch (SocketException ex)
 			{
-				this.SocketErrorCall(ex, new SocketEventArgs<T, TP>(this), SocketErrorType.Send);
+				this.SocketErrorCall(ex, new SocketEventArgs<T, TSendPacket, TReceivePacket>(this), SocketErrorType.Send);
+			}
+			catch (ObjectDisposedException)
+			{
+
 			}
 		}
 
@@ -341,9 +378,9 @@ namespace System.Net.Sockets.Plus
 		#endregion
 
 		#region PrivateMethods
-		private void SocketErrorCall(SocketException ex, SocketEventArgs<T, TP> socket, SocketErrorType type)
+		private void SocketErrorCall(SocketException ex, SocketEventArgs<T, TSendPacket, TReceivePacket> socket, SocketErrorType type)
 		{
-			SocketErrorEventArgs<T, TP> eArgs = new SocketErrorEventArgs<T, TP>(ex, socket, type);
+			var eArgs = new SocketErrorEventArgs<T, TSendPacket, TReceivePacket>(ex, socket, type);
 			if (OnSocketException != null)
 			{
 				OnSocketException(this, eArgs);
@@ -352,7 +389,7 @@ namespace System.Net.Sockets.Plus
 
 			if (!socket.Client.Connected)
 			{
-				SocketEventArgs<T, TP> args = new SocketEventArgs<T, TP>(socket);
+				var args = new SocketEventArgs<T, TSendPacket, TReceivePacket>(socket);
 
 				if (OnDisconnect != null)
 				{
