@@ -23,9 +23,13 @@ namespace ExampleHttpServer
 		}
 		public class testPage : IPage
 		{
+			Random rand = new Random();
+			string[] omikuzi = new string[] { "大吉", "中吉", "小吉", "末吉", "吉" };
 			public override HttpSendPacket PageRead(HttpPath Args)
 			{
-				return OK("OK!!!");
+				int randomValue = rand.Next(omikuzi.Length);
+				string omikuziResult = omikuzi[randomValue];
+				return OK(string.Format("{0} ({1})", omikuziResult, randomValue));
 			}
 		}
 	}

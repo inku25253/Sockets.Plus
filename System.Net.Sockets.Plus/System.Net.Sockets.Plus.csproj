@@ -60,6 +60,7 @@
     <Compile Include="HttpPackets\HttpDirectories\DefaultErrorPage.cs" />
     <Compile Include="HttpPackets\HttpDirectories\HttpDirectory.cs" />
     <Compile Include="HttpPackets\HttpDirectories\HttpDirectoryService.cs" />
+    <Compile Include="HttpPackets\HttpDirectories\IErrorPage.cs" />
     <Compile Include="HttpPackets\HttpDirectories\IHttpDirectory.cs" />
     <Compile Include="HttpPackets\HttpDirectories\HttpDirectoryObject.cs" />
     <Compile Include="HttpPackets\HttpDirectories\IPage.cs" />
