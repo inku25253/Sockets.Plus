@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>bf054578-9de7-4e76-bce0-db8c65b3612a</ProjectGuid>
+    <ProjectGuid>{8990CDEE-2D0A-482E-924D-2ED72F6A32B5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UnitTestProject1</RootNamespace>
@@ -52,6 +52,12 @@
   <ItemGroup>
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Net.Sockets.Plus\System.Net.Sockets.Plus.csproj">
+      <Project>{5a5ed60a-648c-450b-ad20-06b0d915ef61}</Project>
+      <Name>System.Net.Sockets.Plus</Name>
+    </ProjectReference>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
