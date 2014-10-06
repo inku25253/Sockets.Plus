@@ -189,7 +189,26 @@ namespace System.Net.Sockets.Plus
 
 		}
 
-
+		public void AllClientSend(TSendPacket data)
+		{
+			SocketClient<TState, TSendPacket, TReceivePacket> Current;
+			for (int i = 0; i < Clients.Count; i++)
+			{
+				Current = Clients[i];
+				if (ConnectCheck(Current))
+					Current.Send(data);
+			}
+		}
+		public void AllClientSend(byte[] data)
+		{
+			SocketClient<TState, TSendPacket, TReceivePacket> Current;
+			for (int i = 0; i < Clients.Count; i++)
+			{
+				Current = Clients[i];
+				if (ConnectCheck(Current))
+					Current.Send(data);
+			}
+		}
 
 		public void Send(SocketClient<TState, TSendPacket, TReceivePacket> client, TSendPacket data)
 		{
