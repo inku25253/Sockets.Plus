@@ -37,11 +37,12 @@ namespace System.Net.Sockets.Plus
 	public class SocketEventArgs<T, TSendPacket, TReceivePacket> : EventArgs
 	{
 		public SocketClient<T, TSendPacket, TReceivePacket> Client { get; protected set; }
-
+		public SocketServer<T, TSendPacket, TReceivePacket> Server { get { return Client.Server; } }
 
 		public SocketEventArgs(SocketClient<T, TSendPacket, TReceivePacket> client)
 		{
 			this.Client = client;
+
 		}
 		public SocketEventArgs(SocketEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
