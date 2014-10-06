@@ -19,13 +19,5 @@ namespace System.Net.Sockets.Plus
 		}
 
 
-		public override string ToString()
-		{
-			IPEndPoint ipEndPoint = RemoteEndPoint as IPEndPoint;
-			if (ipEndPoint != null)
-				return string.Format("DISCONNECT: {0}", ipEndPoint.ToString());
-			else return base.ToString();
-		}
-
 	}
 }

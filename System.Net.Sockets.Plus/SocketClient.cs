@@ -83,6 +83,12 @@ namespace System.Net.Sockets.Plus
 		public IPacketCrypter Crypter { get; set; }
 
 		public bool IsClosed { get; private set; }
+
+		/// <summary>
+		/// エラーが発生した時に呼び出し元にthrowするかどうかを取得、設定します。
+		/// (Default: true)
+		/// </summary>
+		public bool IsThrowProtectEnable { get; set; }
 		#endregion
 
 		#region Events
@@ -101,6 +107,7 @@ namespace System.Net.Sockets.Plus
 			this.Decoder = decoder;
 			this.Encoder = encoder;
 			IsClosed = false;
+			IsThrowProtectEnable = Server.IsThrowProtectEnable;
 		}
 
 		internal SocketClient(SocketClient<T, TSendPacket, TReceivePacket> args)
@@ -117,6 +124,8 @@ namespace System.Net.Sockets.Plus
 		{
 			Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
+			IsClosed = false;
+			IsThrowProtectEnable = true;
 		}
 		#endregion
 
@@ -398,6 +407,8 @@ namespace System.Net.Sockets.Plus
 				}
 				socket.Client.CallDisconnect(this, args);
 			}
+			if (IsThrowProtectEnable == false)
+				throw ex;
 		}
 
 		#endregion

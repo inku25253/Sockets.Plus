@@ -23,10 +23,17 @@ namespace System.Net.Sockets.Plus
 
 		public override string ToString()
 		{
-			IPEndPoint ipEndPoint = RemoteEndPoint as IPEndPoint;
-			if (ipEndPoint != null)
-				return string.Format("CONNECT: {0}", ipEndPoint.ToString());
-			else return base.ToString();
+			try
+			{
+				IPEndPoint ipEndPoint = RemoteEndPoint as IPEndPoint;
+				if (ipEndPoint != null && Client.Connected)
+					return string.Format("CONNECT: {0}", ipEndPoint.ToString());
+				else return base.ToString();
+			}
+			catch (SocketException)
+			{
+				return base.ToString();
+			}
 		}
 
 	}

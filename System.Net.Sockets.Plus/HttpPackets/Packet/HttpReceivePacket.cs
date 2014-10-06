@@ -11,7 +11,7 @@ namespace System.Net.Sockets.Plus.HttpPackets
 	public class HttpReceivePacket
 	{
 		public const string RequestHeaderPattern= @"(?<method>[\w]+)\s(?<path>[\w/%.=?&_-]+)\sHTTP/(?<version>[0-9\.]+)";
-		public const string PagePattern			= @"/[\w%.=?&_-]+";
+		public const string PagePattern			= @"/([\w%.=?&_-]+)?";
 		public const string NoArgsPagePattern	= @"/[\w%.]+";
 		public const string PageArgumentPattern	= @"[?&](?<argument>[\w%._-]+)([=]?(?<value>[\w%._-]+)?)";
 
