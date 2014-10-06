@@ -86,10 +86,10 @@ namespace System.Net.Sockets.Plus
 		#endregion
 
 		#region Events
-		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketEvent OnDisconnect;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketDisconnectEvent OnDisconnect;
 		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketErrorEvent OnSocketException;
-		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketEvent OnConnected;
-		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketEvent OnDataReceived;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketConnectEvent OnConnected;
+		public event SocketServer<T, TSendPacket, TReceivePacket>.SocketReceiveEvent OnDataReceived;
 		#endregion
 
 		#region Constructors
@@ -121,7 +121,7 @@ namespace System.Net.Sockets.Plus
 		#endregion
 
 		#region InternalMethods
-		internal void CallConnected(object sender, SocketEventArgs<T, TSendPacket, TReceivePacket> args)
+		internal void CallConnected(object sender, SocketConnectEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			if (OnConnected != null)
 			{
@@ -142,7 +142,7 @@ namespace System.Net.Sockets.Plus
 				OnSocketException(sender, args);
 			}
 		}
-		internal void CallDisconnect(object sender, SocketEventArgs<T, TSendPacket, TReceivePacket> args)
+		internal void CallDisconnect(object sender, SocketDisconnectEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 			if (OnDisconnect != null)
 			{
@@ -264,7 +264,7 @@ namespace System.Net.Sockets.Plus
 		#region CallbackMethods
 		private void CollbackOnConnected(IAsyncResult ar)
 		{
-			var args = new SocketEventArgs<T, TSendPacket, TReceivePacket>(this);
+			var args = new SocketConnectEventArgs<T, TSendPacket, TReceivePacket>(this);
 			this.NetworkStream = new SocketStream<T, TSendPacket, TReceivePacket>(this);
 			try
 			{
@@ -291,7 +291,7 @@ namespace System.Net.Sockets.Plus
 			Client.EndDisconnect(ar);
 
 
-			var args = new SocketEventArgs<T, TSendPacket, TReceivePacket>(this);
+			var args = new SocketDisconnectEventArgs<T, TSendPacket, TReceivePacket>(this);
 			CallDisconnect(this, args);
 			clientDone.Set();
 		}
@@ -390,7 +390,7 @@ namespace System.Net.Sockets.Plus
 
 			if (!socket.Client.Connected)
 			{
-				var args = new SocketEventArgs<T, TSendPacket, TReceivePacket>(socket);
+				var args = new SocketDisconnectEventArgs<T, TSendPacket, TReceivePacket>(socket);
 
 				if (OnDisconnect != null)
 				{

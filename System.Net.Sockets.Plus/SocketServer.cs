@@ -88,7 +88,7 @@ namespace System.Net.Sockets.Plus
 
 		#region Delegate
 		public delegate void SocketEvent(object sender, SocketEventArgs<TState, TSendPacket, TReceivePacket> args);
-		public delegate void SocketReceiveEventArgs(object sender, SocketReceiveEventArgs<TState, TSendPacket, TReceivePacket> args);
+		public delegate void SocketReceiveEvent(object sender, SocketReceiveEventArgs<TState, TSendPacket, TReceivePacket> args);
 		public delegate void SocketErrorEvent(object sender, SocketErrorEventArgs<TState, TSendPacket, TReceivePacket> args);
 		public delegate void SocketConnectEvent(object sender, SocketConnectEventArgs<TState, TSendPacket, TReceivePacket> args);
 		public delegate void SocketDisconnectEvent(object sender, SocketDisconnectEventArgs<TState, TSendPacket, TReceivePacket> args);
@@ -98,7 +98,7 @@ namespace System.Net.Sockets.Plus
 		public event SocketDisconnectEvent OnDisconnect;
 		public event SocketErrorEvent OnSocketException;
 		public event SocketConnectEvent OnConnectRequest;
-		public event SocketReceiveEventArgs OnDataReceived;
+		public event SocketReceiveEvent OnDataReceived;
 		#endregion
 
 		#region Constructor
