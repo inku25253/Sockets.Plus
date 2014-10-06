@@ -29,7 +29,7 @@ namespace ExampleHttpServer
 			{
 				int randomValue = rand.Next(omikuzi.Length);
 				string omikuziResult = omikuzi[randomValue];
-				return OK(string.Format("{0} ({1})", omikuziResult, randomValue));
+				return IAmTeapot(string.Format("{0} ({1})", omikuziResult, randomValue));
 			}
 		}
 	}

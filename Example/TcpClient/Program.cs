@@ -12,8 +12,8 @@ namespace TcpClient
 		static void Main(string[] args)
 		{
 			bool isServerMode = false;
-			TcpServer server;
-			TcpClient client;
+			TcpServer server = null;
+			TcpClient client = null;
 			if (SocketServer.CheckPort(TcpServer.Port))
 			{
 				server = new TcpServer();
@@ -25,9 +25,30 @@ namespace TcpClient
 				isServerMode = false;
 			}
 
+			string text =Console.ReadLine();
+			while (text != "quit")
+			{
+				if (text == "\\n")
+					text = "\n";
+				if (isServerMode == false)
+				{
+
+					client.Send(text);
 
 
+				}
+				else
+				{
+					server.Send(text);
+				}
 
+
+				text = Console.ReadLine();
+			}
+
+
+			server = null;
+			client = null;
 		}
 
 	}
