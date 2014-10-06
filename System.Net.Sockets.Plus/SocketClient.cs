@@ -65,7 +65,8 @@ namespace System.Net.Sockets.Plus
 
 		private readonly object NetworkLock = new object();
 
-		public Socket Client;
+		public Socket Client { get; private set; }
+
 		public SocketServer<T, TSendPacket, TReceivePacket> Server { get; private set; }
 		public T State { get; set; }
 

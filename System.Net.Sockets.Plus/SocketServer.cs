@@ -53,21 +53,8 @@ namespace System.Net.Sockets.Plus
 				base.DefaultEncoder = value;
 			}
 		}
-
-
-		public new IActivator<TState, TPacket> Activator
-		{
-			get
-			{
-				return base.Activator as IActivator<TState, TPacket>;
-			}
-			set
-			{
-				base.Activator = value;
-			}
-		}
 	}
-	public class SocketServer<TState, TSendPacket, TReceivePacket>
+	public class SocketServer<TState, TSendPacket, TReceivePacket> : IDisposable
 	{
 
 		#region Fields
@@ -89,7 +76,13 @@ namespace System.Net.Sockets.Plus
 		public IActivator<TState, TSendPacket, TReceivePacket> Activator { get; set; }
 
 
+		public Exception LastError { get; private set; }
 
+		/// <summary>
+		/// エラーが発生した時に呼び出し元にthrowするかどうかを取得、設定します。
+		/// (Default: true)
+		/// </summary>
+		public bool IsThrowProtectEnable { get; set; }
 
 		#endregion
 
@@ -97,11 +90,12 @@ namespace System.Net.Sockets.Plus
 		public delegate void SocketEvent(object sender, SocketEventArgs<TState, TSendPacket, TReceivePacket> args);
 		public delegate void SocketReceiveEventArgs(object sender, SocketReceiveEventArgs<TState, TSendPacket, TReceivePacket> args);
 		public delegate void SocketErrorEvent(object sender, SocketErrorEventArgs<TState, TSendPacket, TReceivePacket> args);
-		public delegate void SocketConnectEvent(object sender, SocketEventArgs<TState, TSendPacket, TReceivePacket> args);
+		public delegate void SocketConnectEvent(object sender, SocketConnectEventArgs<TState, TSendPacket, TReceivePacket> args);
+		public delegate void SocketDisconnectEvent(object sender, SocketDisconnectEventArgs<TState, TSendPacket, TReceivePacket> args);
 		#endregion
 
 		#region Event
-		public event SocketEvent OnDisconnect;
+		public event SocketDisconnectEvent OnDisconnect;
 		public event SocketErrorEvent OnSocketException;
 		public event SocketConnectEvent OnConnectRequest;
 		public event SocketReceiveEventArgs OnDataReceived;
@@ -113,6 +107,8 @@ namespace System.Net.Sockets.Plus
 			Server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			Clients = new List<SocketClient<TState, TSendPacket, TReceivePacket>>();
 			Activator = new SimpleActivator<TState, TSendPacket, TReceivePacket>();
+
+			IsThrowProtectEnable = true;
 		}
 
 		public SocketServer(IPacketDecoder<TState, TSendPacket, TReceivePacket> decoder, IPacketEncoder<TState, TSendPacket, TReceivePacket> encoder)
@@ -140,12 +136,12 @@ namespace System.Net.Sockets.Plus
 			{
 				return Setup(new IPEndPoint(IPAddress.Parse(ip), port));
 			}
-			catch { return false; }
+			catch (Exception e) { LastError = e; return false; }
 		}
 		public bool Setup(EndPoint endp)
 		{
 			try { Throwable_Setup(endp); return true; }
-			catch { return false; }
+			catch (Exception e) { LastError = e; return false; }
 		}
 
 		/// <summary>
@@ -229,6 +225,7 @@ namespace System.Net.Sockets.Plus
 		#region PrivateMethods
 		private void SocketErrorCall(Exception ex, SocketEventArgs<TState, TSendPacket, TReceivePacket> socket, SocketErrorType type)
 		{
+			LastError = ex;
 			SocketErrorEventArgs
 			<TState, TSendPacket, TReceivePacket> eArgs = new SocketErrorEventArgs<TState, TSendPacket, TReceivePacket>(ex, socket, type);
 			if (OnSocketException != null)
@@ -240,6 +237,10 @@ namespace System.Net.Sockets.Plus
 			ConnectCheck(socket.Client);
 			if (Clients.Contains(socket.Client))
 				Clients.Remove(socket.Client);
+
+			if (IsThrowProtectEnable == false)
+				throw ex;
+
 		}
 
 		private bool ConnectCheck(SocketClient<TState, TSendPacket, TReceivePacket> client)
@@ -258,7 +259,7 @@ namespace System.Net.Sockets.Plus
 		}
 		private void CallDisconnect(SocketClient<TState, TSendPacket, TReceivePacket> client)
 		{
-			SocketEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client);
+			SocketDisconnectEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketDisconnectEventArgs<TState, TSendPacket, TReceivePacket>(client);
 
 			if (OnDisconnect != null)
 			{
@@ -283,7 +284,7 @@ namespace System.Net.Sockets.Plus
 				{
 					Socket socket = Server.EndAccept(ar);
 					var client = new SocketClient<TState, TSendPacket, TReceivePacket>(this, socket, DefaultDecoder, DefaultEncoder);
-					SocketEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketEventArgs<TState, TSendPacket, TReceivePacket>(client);
+					SocketConnectEventArgs<TState, TSendPacket, TReceivePacket> args = new SocketConnectEventArgs<TState, TSendPacket, TReceivePacket>(client);
 
 					try
 					{
@@ -417,5 +418,36 @@ namespace System.Net.Sockets.Plus
 			}
 		}
 		#endregion
+
+		#region IDisposable メンバー
+
+		public void Dispose()
+		{
+			this.Stop();
+		}
+
+		#endregion
+
+		#region PublicStaticMethods
+
+		public static bool CheckPort(int port)
+		{
+			SocketServer server = new SocketServer();
+			bool result = false;
+			try
+			{
+				result = server.Setup(port);
+			}
+			finally
+			{
+				server.Stop();
+				server = null;
+			}
+
+			return result;
+		}
+		#endregion
+
+
 	}
 }

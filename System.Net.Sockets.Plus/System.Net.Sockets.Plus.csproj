@@ -55,6 +55,7 @@
     <Compile Include="BytePackets\ByteDecoder.cs" />
     <Compile Include="BytePackets\ByteEncoder.cs" />
     <Compile Include="BytePackets\BytePacket.cs" />
+    <Compile Include="EventArgs\SocketDisconnectEventArgs.cs" />
     <Compile Include="HttpPackets\HttpClient.cs" />
     <Compile Include="HttpPackets\HttpDecoder.cs" />
     <Compile Include="HttpPackets\HttpDirectories\DefaultErrorPage.cs" />
@@ -83,11 +84,12 @@
     <Compile Include="Serializer\ClassEncoder.cs" />
     <Compile Include="SimpleActivator.cs" />
     <Compile Include="SocketClientRequest.cs" />
-    <Compile Include="SocketErrorEventArgs.cs" />
+    <Compile Include="EventArgs\SocketConnectEventArgs.cs" />
+    <Compile Include="EventArgs\SocketErrorEventArgs.cs" />
     <Compile Include="SocketClient.cs" />
-    <Compile Include="SocketEventArgs.cs" />
+    <Compile Include="EventArgs\SocketEventArgs.cs" />
     <Compile Include="SocketPlusException.cs" />
-    <Compile Include="SocketReceiveEventArgs.cs" />
+    <Compile Include="EventArgs\SocketReceiveEventArgs.cs" />
     <Compile Include="SocketServer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SocketStream.cs" />
