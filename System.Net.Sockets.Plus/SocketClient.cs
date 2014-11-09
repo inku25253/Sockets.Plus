@@ -68,6 +68,8 @@ namespace System.Net.Sockets.Plus
 		public Socket Client { get; private set; }
 
 		public SocketServer<T, TSendPacket, TReceivePacket> Server { get; private set; }
+		public IActivator<T, TSendPacket, TReceivePacket> Activator { get; set; }
+
 		public T State { get; set; }
 
 		public int ID { get; internal set; }
@@ -123,6 +125,7 @@ namespace System.Net.Sockets.Plus
 		public SocketClient()
 		{
 			Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			Activator = new SimpleActivator<T, TSendPacket, TReceivePacket>();
 
 			IsClosed = false;
 			IsThrowProtectEnable = true;
@@ -132,6 +135,7 @@ namespace System.Net.Sockets.Plus
 		#region InternalMethods
 		internal void CallConnected(object sender, SocketConnectEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
+
 			if (OnConnected != null)
 			{
 				OnConnected(sender, args);
@@ -279,9 +283,14 @@ namespace System.Net.Sockets.Plus
 			{
 				Client.EndConnect(ar);
 
+				clientDone.Set();
+				if (State == null)
+				{
+					State = Activator.Activate(args);
+				}
+
 				CallConnected(this, args);
 
-				clientDone.Set();
 				IsClosed = false;
 				byte[] Buffer = new byte[0];
 				Client.BeginReceive(Buffer, 0, 0, SocketFlags.None, ReceiveTask, null);

@@ -20,7 +20,7 @@ namespace System.Net.Sockets.Plus.HttpPackets
 			Server = new SocketServer<HttpClient, HttpSendPacket, HttpReceivePacket>();
 			Server.DefaultDecoder = new HttpDecoder();
 			Server.DefaultEncoder = new HttpEncoder();
-			Server.Activator = new SimpleActivator<HttpClient, HttpSendPacket, HttpReceivePacket>(typeof(SocketClientRequest));
+			Server.Activator = new SimpleActivator<HttpClient, HttpSendPacket, HttpReceivePacket>(typeof(SocketClientRequest), this);
 			this.DirectoryService = new HttpDirectoryService();
 
 

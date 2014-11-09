@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,7 +29,7 @@ namespace System.Net.Sockets.Plus
 		TState IActivator<TState, TSendPacket, TReceivePacket>.Activate(SocketEventArgs<TState, TSendPacket, TReceivePacket> args)
 		{
 			object[] instanceArgument = new object[Arguments.Length];
-			for (int i = 0; i < Arguments.Length; i++)
+			for (int i = 0; i < Arguments.Length; ++i)
 			{
 				object current = Arguments[i];
 				if (current == typeof(SocketClientRequest))
@@ -37,7 +38,20 @@ namespace System.Net.Sockets.Plus
 				}
 				instanceArgument[i] = current;
 			}
-			return (TState)Activator.CreateInstance(typeof(TState), instanceArgument);
+			Type[] argumentTypes = new Type[instanceArgument.Length];
+
+
+			for (int i = 0; i < argumentTypes.Length; ++i)
+			{
+				argumentTypes[i] = instanceArgument[i].GetType();
+			}
+
+
+			var ctor = typeof(TState).GetConstructor(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance, null, argumentTypes, null);
+
+
+
+			return (TState)ctor.Invoke(instanceArgument);//Activator.CreateInstance(typeof(TState), instanceArgument);
 		}
 
 		#endregion

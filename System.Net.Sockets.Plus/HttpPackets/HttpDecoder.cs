@@ -28,9 +28,8 @@ namespace System.Net.Sockets.Plus.HttpPackets
 			}
 			catch (InvalidProtocolException)
 			{
-
-				HttpSendPacket error_Packet = new HttpSendPacket(HttpStatus.BadRequest, "<font size=16>BadRequest</font>", Encoding.UTF8);
-				client.Send(error_Packet);
+				var error_Packet = client.State.Server.DirectoryService.GetErrorPage(HttpStatus.BadRequest);
+				client.Send(error_Packet.PageRead(new HttpPath()));
 				client.Close();
 				return null;
 

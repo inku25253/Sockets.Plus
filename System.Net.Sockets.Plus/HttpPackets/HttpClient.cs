@@ -11,9 +11,11 @@ namespace System.Net.Sockets.Plus.HttpPackets
 
 
 		SocketClient<HttpClient, HttpSendPacket, HttpReceivePacket> Client;
-		public HttpClient(SocketClient<HttpClient, HttpSendPacket, HttpReceivePacket> client)
+		public HttpServer Server { get; private set; }
+		public HttpClient(SocketClient<HttpClient, HttpSendPacket, HttpReceivePacket> client, HttpServer server)
 		{
 			this.Client = client;
+			this.Server = server;
 		}
 		public HttpClient()
 		{

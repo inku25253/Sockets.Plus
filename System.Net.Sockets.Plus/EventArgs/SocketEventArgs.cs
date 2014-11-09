@@ -39,6 +39,9 @@ namespace System.Net.Sockets.Plus
 		public SocketClient<T, TSendPacket, TReceivePacket> Client { get; protected set; }
 		public SocketServer<T, TSendPacket, TReceivePacket> Server { get { return Client.Server; } }
 
+		public T State { get { return Client.State; } }
+
+
 		public SocketEventArgs(SocketClient<T, TSendPacket, TReceivePacket> client)
 		{
 			this.Client = client;
