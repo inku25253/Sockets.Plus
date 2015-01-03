@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace System.Net.Sockets.Plus
 {
 
-	public class SocketClient : SocketClient<object>
+	public class SocketClient :SocketClient<object>
 	{
 		public SocketClient()
 			: base()
@@ -18,7 +18,7 @@ namespace System.Net.Sockets.Plus
 
 		}
 	}
-	public class SocketClient<T> : SocketClient<T, BytePacket>
+	public class SocketClient<T> :SocketClient<T, BytePacket>
 	{
 		public SocketClient()
 		{
@@ -27,7 +27,7 @@ namespace System.Net.Sockets.Plus
 
 		}
 	}
-	public class SocketClient<T, TP> : SocketClient<T, TP, TP>
+	public class SocketClient<T, TP> :SocketClient<T, TP, TP>
 	{
 		public new IPacketDecoder<T, TP, TP> Decoder
 		{
@@ -125,7 +125,7 @@ namespace System.Net.Sockets.Plus
 		public SocketClient()
 		{
 			Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			Activator = new SimpleActivator<T, TSendPacket, TReceivePacket>();
+			//Activator = new SimpleActivator<T, TSendPacket, TReceivePacket>();
 
 			IsClosed = false;
 			IsThrowProtectEnable = true;
@@ -136,28 +136,28 @@ namespace System.Net.Sockets.Plus
 		internal void CallConnected(object sender, SocketConnectEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
 
-			if (OnConnected != null)
+			if(OnConnected != null)
 			{
 				OnConnected(sender, args);
 			}
 		}
 		internal void CallDataReceived(object sender, SocketReceiveEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
-			if (OnDataReceived != null)
+			if(OnDataReceived != null)
 			{
 				OnDataReceived(sender, args);
 			}
 		}
 		internal void CallSocketException(object sender, SocketErrorEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
-			if (OnSocketException != null)
+			if(OnSocketException != null)
 			{
 				OnSocketException(sender, args);
 			}
 		}
 		internal void CallDisconnect(object sender, SocketDisconnectEventArgs<T, TSendPacket, TReceivePacket> args)
 		{
-			if (OnDisconnect != null)
+			if(OnDisconnect != null)
 			{
 				OnDisconnect(sender, args);
 			}
@@ -173,7 +173,7 @@ namespace System.Net.Sockets.Plus
 		public void Connect(EndPoint endp)
 		{
 			ConnectAsync(endp);
-			if (!clientDone.WaitOne(3000))
+			if(!clientDone.WaitOne(3000))
 				throw new Exception();
 		}
 		public void ConnectAsync(string ip, int port)
@@ -182,23 +182,23 @@ namespace System.Net.Sockets.Plus
 		}
 		public void ConnectAsync(EndPoint endp)
 		{
-			if (Encoder == null)
+			if(Encoder == null)
 				throw new InvalidOperationException("Encoderが未設定です。");
-			if (Decoder == null)
+			if(Decoder == null)
 				throw new InvalidOperationException("Decoderが未設定です。");
 
 			Client.BeginConnect(endp, CollbackOnConnected, null);
 		}
 		public void Send(TSendPacket data)
 		{
-			if (Server != null)
+			if(Server != null)
 				Server.Send(this, data);
 			else
 			{
 
 				byte[] byteData = Encoder.Encode(data, this);
 
-				if (Crypter != null)
+				if(Crypter != null)
 				{
 					byteData = Crypter.Encrypt(byteData, 0, byteData.Length);
 				}
@@ -207,13 +207,13 @@ namespace System.Net.Sockets.Plus
 			}
 		}
 
-		public void Send(byte[] data)
+		public void RawDataSend(byte[] data)
 		{
-			if (Server != null)
-				Server.Send(this, data);
+			if(Server != null)
+				Server.RawDataSend(this, data);
 			else
 			{
-				if (Crypter != null)
+				if(Crypter != null)
 				{
 					data = Crypter.Encrypt(data, 0, data.Length);
 				}
@@ -228,7 +228,7 @@ namespace System.Net.Sockets.Plus
 		/// <exception cref="Exception">切断に失敗した時</exception>
 		public void Close()
 		{
-			if (Client.Connected)
+			if(Client.Connected)
 			{
 				//Client.Disconnect(true);
 				//Client.Shutdown(SocketShutdown.Both);
@@ -252,10 +252,10 @@ namespace System.Net.Sockets.Plus
 			{
 				now += Client.Receive(result, now, size - now, SocketFlags.None);
 			}
-			while (now < size);
+			while(now < size);
 
 
-			if (now != size)
+			if(now != size)
 				throw new Exception();
 			return result;
 		}
@@ -284,7 +284,7 @@ namespace System.Net.Sockets.Plus
 				Client.EndConnect(ar);
 
 				clientDone.Set();
-				if (State == null)
+				if(State == null && Activator != null)
 				{
 					State = Activator.Activate(args);
 				}
@@ -295,11 +295,11 @@ namespace System.Net.Sockets.Plus
 				byte[] Buffer = new byte[0];
 				Client.BeginReceive(Buffer, 0, 0, SocketFlags.None, ReceiveTask, null);
 			}
-			catch (SocketException ex)
+			catch(SocketException ex)
 			{
 				this.SocketErrorCall(ex, args, SocketErrorType.Connect);
 			}
-			catch (ObjectDisposedException)
+			catch(ObjectDisposedException)
 			{
 
 			}
@@ -326,10 +326,10 @@ namespace System.Net.Sockets.Plus
 
 
 
-				if (this.Client.Available > 0)
+				if(this.Client.Available > 0)
 				{
 					//Console.WriteLine(len);
-					lock (NetworkLock)
+					lock(NetworkLock)
 					{
 						/*
 							byte[] buff = Buffer;
@@ -341,11 +341,11 @@ namespace System.Net.Sockets.Plus
 							}*/
 
 
-						while (this.Client.Available > 0)
+						while(this.Client.Available > 0)
 						{
-							args.Packet =(TReceivePacket)Decoder.Decode(this, this, this.NetworkStream);
+							args.Packet = (TReceivePacket)Decoder.Decode(this, this, this.NetworkStream);
 							UsingBuffer = NetworkStream.UsingBuffer.ToArray();
-							if (OnDataReceived != null)
+							if(OnDataReceived != null)
 							{
 								OnDataReceived(this, args);
 							}
@@ -361,15 +361,15 @@ namespace System.Net.Sockets.Plus
 
 
 			}
-			catch (InvalidProtocolException)
+			catch(InvalidProtocolException)
 			{
 				Close();
 			}
-			catch (SocketException ex)
+			catch(SocketException ex)
 			{
 				this.SocketErrorCall(ex, args, SocketErrorType.Receive);
 			}
-			catch (ObjectDisposedException)
+			catch(ObjectDisposedException)
 			{
 				Close();
 			}
@@ -383,11 +383,11 @@ namespace System.Net.Sockets.Plus
 			{
 				Client.EndSend(ar);
 			}
-			catch (SocketException ex)
+			catch(SocketException ex)
 			{
 				this.SocketErrorCall(ex, new SocketEventArgs<T, TSendPacket, TReceivePacket>(this), SocketErrorType.Send);
 			}
-			catch (ObjectDisposedException)
+			catch(ObjectDisposedException)
 			{
 
 			}
@@ -400,23 +400,23 @@ namespace System.Net.Sockets.Plus
 		private void SocketErrorCall(SocketException ex, SocketEventArgs<T, TSendPacket, TReceivePacket> socket, SocketErrorType type)
 		{
 			var eArgs = new SocketErrorEventArgs<T, TSendPacket, TReceivePacket>(ex, socket, type);
-			if (OnSocketException != null)
+			if(OnSocketException != null)
 			{
 				OnSocketException(this, eArgs);
 			}
 			//socket.Client.CallSocketException(this, eArgs);
 
-			if (!socket.Client.Connected)
+			if(!socket.Client.Connected)
 			{
 				var args = new SocketDisconnectEventArgs<T, TSendPacket, TReceivePacket>(socket);
 
-				if (OnDisconnect != null)
+				if(OnDisconnect != null)
 				{
 					OnDisconnect(this, args);
 				}
 				socket.Client.CallDisconnect(this, args);
 			}
-			if (IsThrowProtectEnable == false)
+			if(IsThrowProtectEnable == false)
 				throw ex;
 		}
 

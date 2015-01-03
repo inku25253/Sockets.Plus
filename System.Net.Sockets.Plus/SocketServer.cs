@@ -206,7 +206,7 @@ namespace System.Net.Sockets.Plus
 			{
 				Current = Clients[i];
 				if (ConnectCheck(Current))
-					Current.Send(data);
+					Current.RawDataSend(data);
 			}
 		}
 
@@ -214,11 +214,11 @@ namespace System.Net.Sockets.Plus
 		{
 			if (!ConnectCheck(client)) return;
 			byte[] byteData = client.Encoder.Encode(data, client);
-			Send(client, byteData);
+			RawDataSend(client, byteData);
 
 		}
 
-		public void Send(SocketClient<TState, TSendPacket, TReceivePacket> client, byte[] data)
+		public void RawDataSend(SocketClient<TState, TSendPacket, TReceivePacket> client, byte[] data)
 		{
 			try
 			{
